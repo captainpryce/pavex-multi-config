@@ -4,14 +4,13 @@ use pavex::blueprint::linter::Lint;
 use pavex::f;
 use pavex::time::format_description::well_known::iso8601::Config;
 
-// mod.rs files signify that the directory is a module. Any other .rs files inside of a directory are considered to be
-// submodules
 pub(crate) fn big_data_bp() -> Blueprint {
     let mut bp = Blueprint::new();
-    //BigDataConfig::register(&mut bp);
-    // //bp.singleton(f!(self::bigdata_configuration::BigDataConfig::big_data_config), &Config)
-    //     .cloning(CloningStrategy::CloneIfNecessary)
-    //     .ignore(Lint::Unused);
+
+    // If I use this singleton and remove the ApplicationConfig, I get the error.
+    bp.singleton(f!(self::bigdata_configuration::BigDataConfig::big_data_config))
+        .cloning(CloningStrategy::CloneIfNecessary)
+        .ignore(Lint::Unused);
     bp.route(GET, "/product_info/:upc", f!(self::bigdata::get_product_data));
     bp.singleton(f!(self::bigdata_client::BigDataClient::new))
         .cloning(CloningStrategy::CloneIfNecessary)// allows the HTTP client to be cloned. This would allow it to be used in multiple threads and have unique configurations depending on where it is used. E.g. different headers, timeouts, etc or maintaining different states.

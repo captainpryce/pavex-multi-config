@@ -10,7 +10,7 @@ pub struct ApplicationState {
     s0: app::routes::integrations::big_data_api::bigdata_client::BigDataClient,
 }
 pub async fn build_application_state(
-    v0: app::configuration::ApplicationConfig,
+    v0: app::routes::integrations::big_data_api::bigdata_configuration::BigDataConfig,
 ) -> crate::ApplicationState {
     let v1 = app::routes::integrations::big_data_api::bigdata_client::BigDataClient::new(
         v0,

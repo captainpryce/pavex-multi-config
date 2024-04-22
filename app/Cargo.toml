@@ -14,7 +14,8 @@ pavex_tracing = { version = "0.1.21" }
 pavex_cli_client = { version = "0.1.21" }
 tracing = "0.1"
 reqwest = { version = "0.11", features = ["json"] }
-
+sqlx = { version = "0.7", features = [ "runtime-tokio", "tls-rustls", "migrate", "uuid", "macros", "time", "postgres" ] }
 # Configuration
 serde = { version = "1", features = ["derive"] }
 serde-aux = "4"
+secrecy = { version = "0.8", features = ["serde"] }

@@ -1,46 +1,60 @@
 use pavex::blueprint::constructor::CloningStrategy;
 use pavex::blueprint::{linter::Lint, Blueprint};
 use pavex::f;
+use sqlx::postgres::{PgConnectOptions, PgSslMode};
+use serde_aux::field_attributes::deserialize_number_from_string;
+use secrecy::{ExposeSecret, Secret};
 
 // Attribute applied to implement traits (derive) from serde::Derserialize, Debug and Clone. This is done to deserialize data,
 // print helpful debug information and clone the data respectively.
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct ApplicationConfig {
     // here we are defining the bigdata field, returning the BigDataConfig struct as its type
-    pub bigdata: BigDataConfig,
+    pub database: DatabaseConfig,
 }
 
 impl ApplicationConfig {
     // When the ApplicationConfig is implemented, we can call the big_data_config method, which takes a reference to the
-    // ApplicationConfig as a parameter, and returns a reference to the BigDataConfig struct
-    pub fn big_data_config (&self) -> &BigDataConfig {
-        // here we are returning the entire BigDataConfig struct by first referencing the ApplicationConfig struct
-        // and then isolating for the bigdata field, which as the BigDataConfig struct as its type
-        &self.bigdata
+    pub fn database_config(&self) -> &DatabaseConfig {
+        &self.database
     }
 
     pub fn register(bp: &mut Blueprint) {
-        bp.singleton(f!(self::ApplicationConfig::big_data_config))
-            .cloning(CloningStrategy::CloneIfNecessary)
-            .ignore(Lint::Unused);
+        bp.singleton(f!(self::ApplicationConfig::database_config));
     }
 }
 
 #[derive(serde::Deserialize, Debug, Clone)]
-pub struct BigDataConfig {
-    // These are the fields in the BigDataConfig struct
-    // rapid_api_app is considered the name and the String is considered its type
-    pub rapid_api_app: String,
-    pub rapid_api_key: String,
-    pub rapid_api_host: String,
-    pub rapid_api_request_url: String,
+pub struct DatabaseConfig {
+    pub username: String,
+    pub password: Secret<String>,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub port: u16,
+    pub host: String,
+    pub database_name: String,
+    pub require_ssl: bool,
 }
 
-impl BigDataConfig {
-    pub fn new(&self) -> &Self {
-        // returns the entire BigDataConfig struct when the BigDataConfig struct is implemented.
-        // if you wanted only the rapid_api_app or other keys in the struct, you would return those instead by first referencing self, and isolating
-        // the variables needed.
-        &self
+impl DatabaseConfig {
+    /// Return the database connection options.
+    pub fn connection_options(&self) -> PgConnectOptions {
+        let ssl_mode = if self.require_ssl {
+            PgSslMode::Require
+        } else {
+            PgSslMode::Prefer
+        };
+        PgConnectOptions::new()
+            .host(&self.host)
+            .username(&self.username)
+            .password(self.password.expose_secret())
+            .port(self.port)
+            .ssl_mode(ssl_mode)
+            .database(&self.database_name)
+    }
+
+    /// Return a database connection pool.
+    pub async fn get_pool(&self) -> Result<sqlx::PgPool, sqlx::Error> {
+        let pool = sqlx::PgPool::connect_with(self.connection_options()).await?;
+        Ok(pool)
     }
 }

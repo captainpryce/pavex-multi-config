@@ -5,6 +5,7 @@ use figment::providers::{Env, Format, Yaml};
 use figment::Figment;
 use pavex::server::IncomingStream;
 use std::net::SocketAddr;
+use app::routes::integrations::big_data_api::bigdata_configuration::BigDataConfig;
 
 #[derive(serde::Deserialize, Debug, Clone)]
 /// The top-level configuration object, determining the schema

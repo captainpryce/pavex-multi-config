@@ -20,7 +20,7 @@ struct ProductInfo {
 pub struct GetProductDataParams {
     upc: String,
 }
-// TODO:: To fix the compile time error for this method we need to reference the Path parameters correctly using attribute linking.
+
 pub async fn get_product_data(params: PathParams<GetProductDataParams>, client: BigDataClient) -> Response {
     // Create a new HTTP request
     let GetProductDataParams { upc } = params.0;
@@ -48,7 +48,7 @@ pub async fn get_product_data(params: PathParams<GetProductDataParams>, client: 
     }
 }
 impl ProductInfo {
-    // constructor function accepts a UPC values as a parameter. If given, it will initialize the ProductInfo struct
+
     pub fn new(upc: String) -> Self {
         Self {
             upc,
